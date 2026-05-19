@@ -1,0 +1,9 @@
+suites:
+  unit:
+    paths:
+      - src/
+    min_coverage: 1
+  integration:
+    paths:
+      - tests/
+    min_coverage: 1

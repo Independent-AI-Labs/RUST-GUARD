@@ -1,0 +1,4 @@
+exceptions:
+  - pattern: 'unsafe\s*\{'
+    paths: ['src/exec.rs', 'src/log.rs']
+    reason: 'Required for libc FFI calls (getauxval, execve, setrlimit, getuid, localtime_r, strftime) in SUID binary. Only safe wrappers with documented justification.'
