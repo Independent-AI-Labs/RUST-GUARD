@@ -16,40 +16,27 @@ The user cannot bypass the guard because they cannot read, modify, or directly e
 
 ## Architecture
 
-```
-User: git push --force
-            │
-            ▼
-   /usr/bin/git  (SUID root, 4555)
-   rust-guard binary
-            │
-    ┌───────┼───────────┐
-    │       │           │
-    ▼       ▼           ▼
- AT_SECURE  Arg parse  Env sanitise
-  check     + block    (ALLOWED_VARS,
-            (reset,      scrubbed PATH,
-             --amend,    GIT_CONFIG for
-             --force,    safe.directory)
-             revert,
-             merge,
-             stash,
-             SKIP env,
-             etc)
-            │       │
-            └───┬───┘
-                │
-         All clear?
-          ┌──┴──┐
-        YES     NO
-          │      └→ Block with hint + audit log
-          ▼
-   execve(/usr/bin/git.original,
-          sanitised argv, sanitised envp)
-          │
-          ▼
-   Real git runs with user's privileges
-   (guard already dropped via setuid(0)+setuid(uid))
+```mermaid
+flowchart TD
+    User["User: git push --force"] --> Guard["/usr/bin/git (SUID root 4555)<br/>rust-guard binary"]
+
+    Guard --> AT_SECURE["AT_SECURE check"]
+    Guard --> ArgParse["Arg parse + block"]
+    Guard --> EnvSanitise["Env sanitise"]
+
+    AT_SECURE -->|"not SUID"| NotSuid["exit FATAL: NotSuid"]
+    AT_SECURE -->|"OK"| AllClear
+
+    ArgParse -->|"reset, checkout, --amend,<br/>--force, revert, merge,<br/>stash, SKIP env, etc"| Blocked
+    ArgParse -->|"OK"| AllClear
+
+    EnvSanitise -->|"ALLOWED_VARS,<br/>scrubbed PATH,<br/>GIT_CONFIG safe.directory"| AllClear
+
+    AllClear{"All clear?"}
+    AllClear -->|NO| Blocked["Block with hint + audit log"]
+    AllClear -->|YES| Execve["execve(/usr/bin/git.original,<br/>sanitised argv, sanitised envp)"]
+
+    Execve --> RealGit["Real git runs with user's privileges<br/>(guard drops via setuid+setgid)"]
 ```
 
 ## Blocked Operations
