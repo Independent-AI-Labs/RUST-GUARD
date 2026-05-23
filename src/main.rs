@@ -20,7 +20,7 @@ pub enum GuardError {
 }
 
 const BLOCKED_SUBCOMMANDS: &[&str] = &[
-    "reset", "checkout", "clean", "restore", "rm", "rebase", "gc", "prune",
+    "reset", "checkout", "clean", "restore", "rebase", "gc", "prune",
 ];
 
 pub const ALLOWED_VARS: &[&str] = &[

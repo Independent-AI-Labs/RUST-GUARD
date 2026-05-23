@@ -19,6 +19,13 @@ pub fn check_blocked(
         });
     }
 
+    if subcommand == "rm" && !state.has_cached {
+        return Err(GuardError::Blocked {
+            reason: "git rm (destructive - removes files from index + disk)".into(),
+            hint: "Use 'git rm --cached' to remove from index only (keeps files on disk)".into(),
+        });
+    }
+
     if subcommand == "stash" && (state.has_stash_drop || state.has_stash_clear) {
         let what = if state.has_stash_drop {
             "drop"

@@ -10,6 +10,7 @@ pub struct ArgState {
     pub has_stash_clear: bool,
     pub safe_pull_flag: bool,
     pub has_ff_only: bool,
+    pub has_cached: bool,
     pub dangerous_config_keys: Vec<String>,
 }
 
@@ -33,6 +34,7 @@ pub fn parse_args(argv: &[&[u8]]) -> Result<ArgState, GuardError> {
         has_stash_clear: false,
         safe_pull_flag: false,
         has_ff_only: false,
+        has_cached: false,
         dangerous_config_keys: Vec::new(),
     };
 
@@ -101,6 +103,9 @@ pub fn parse_args(argv: &[&[u8]]) -> Result<ArgState, GuardError> {
             }
             if arg_str.starts_with("--ff-only") || arg_str.starts_with("--rebase") {
                 state.safe_pull_flag = true;
+            }
+            if arg_str == "--cached" {
+                state.has_cached = true;
             }
             if arg_str.contains('=') && arg_str.starts_with("--") {
                 let eq_pos = arg_str.find('=').unwrap();
