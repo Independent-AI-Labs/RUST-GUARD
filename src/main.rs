@@ -27,7 +27,6 @@ const BLOCKED_SUBCOMMANDS: &[&str] = &[
     "rebase",
     "gc",
     "prune",
-    "config",
     "bisect",
     "filter-branch",
     "filter-repo",

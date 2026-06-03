@@ -2,14 +2,42 @@ use std::ffi::OsString;
 use std::fs;
 use std::os::unix::process::ExitStatusExt;
 
-use crate::{args::ArgState, GuardError, BLOCKED_SUBCOMMANDS};
+use crate::{args::ArgState, is_dangerous_config_key, GuardError, BLOCKED_SUBCOMMANDS};
 
 pub fn check_blocked(
     state: &ArgState,
     subcommand: &str,
     argv_os: &[OsString],
 ) -> Result<(), GuardError> {
-    if BLOCKED_SUBCOMMANDS.contains(&subcommand) {
+    if subcommand == "config" {
+        // Only block git config when setting a dangerous key.
+        // Legitimate git config (user.name, user.email, etc.) is allowed.
+        // Dangerous keys (core.hookspath, filter.*.smudge, etc.) are blocked.
+        // Checks both -c flags (parsed during arg processing) and positional
+        // key argument (the first non-flag arg after "config").
+        if !state.dangerous_config_keys.is_empty() {
+            let keys = state.dangerous_config_keys.join(", ");
+            return Err(GuardError::Blocked {
+                reason: format!("git config — dangerous config key(s): {}", keys),
+                hint: "Remove the -c flag with the dangerous config key".into(),
+            });
+        }
+        // Check positional key argument (git config <key> <value>)
+        let positional_key: Option<String> = argv_os
+            .iter()
+            .skip(1)
+            .map(|a| a.to_string_lossy().into_owned())
+            .find(|s| s != "config" && !s.starts_with('-'));
+
+        if let Some(ref key) = positional_key {
+            if is_dangerous_config_key(key) {
+                return Err(GuardError::Blocked {
+                    reason: format!("git config — dangerous config key: {}", key),
+                    hint: "Use a non-dangerous config key instead".into(),
+                });
+            }
+        }
+    } else if BLOCKED_SUBCOMMANDS.contains(&subcommand) {
         return Err(GuardError::Blocked {
             reason: format!("destructive subcommand: git {}", subcommand),
             hint: format!(

@@ -1,6 +1,6 @@
 # RUST-GUARD pre-commit configuration.
 #
-# Every shell-sourced check below uses ../AMI-CI/lib/checks.sh because
+# Every shell-sourced check below uses ../CI/lib/checks.sh because
 # RUST-GUARD is a sibling of AMI-CI under projects/.
 
 repos:
@@ -8,14 +8,14 @@ repos:
     hooks:
       - id: check-unstaged
         name: Block Unstaged Changes
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_check_unstaged'"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_check_unstaged'"
         language: system
         pass_filenames: false
         always_run: true
 
       - id: block-sensitive-files
         name: Block Sensitive Files
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_block_sensitive_files \"$@\"' --"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_block_sensitive_files \"$@\"' --"
         language: system
 
       - id: gitleaks
@@ -27,20 +27,20 @@ repos:
 
       - id: ci-check-silent-swallow
         name: Block silent error-swallow patterns (staged diff)
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_check_silent_swallow'"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_check_silent_swallow'"
         language: system
         pass_filenames: false
         always_run: true
 
       - id: check-banned-words
         name: Check Banned Words
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_check_banned_words'"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_check_banned_words'"
         language: system
         pass_filenames: false
 
       - id: check-file-length
         name: Check File Length (max 512 lines)
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_check_file_length'"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_check_file_length'"
         language: system
         pass_filenames: false
 
@@ -60,13 +60,13 @@ repos:
 
       - id: check-commit-message
         name: Check Commit Message Format
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_check_commit_message \"$1\"' --"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_check_commit_message \"$1\"' --"
         language: system
         stages: [commit-msg]
 
       - id: block-coauthored
         name: Block Co-authored Commits
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_block_coauthored \"$1\"' --"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_block_coauthored \"$1\"' --"
         language: system
         stages: [commit-msg]
 
@@ -90,14 +90,14 @@ repos:
 
       - id: block-coauthored-history
         name: Block Commits with Blocked Patterns (full history scan)
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_block_coauthored_history'"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_block_coauthored_history'"
         language: system
         stages: [pre-push]
         pass_filenames: false
 
       - id: verify-coverage
         name: Verify Test Coverage
-        entry: "bash -c 'source ../AMI-CI/lib/checks.sh && ci_verify_coverage'"
+        entry: "bash -c 'source ../CI/lib/checks.sh && ci_verify_coverage'"
         language: system
         stages: [pre-push]
         pass_filenames: false
