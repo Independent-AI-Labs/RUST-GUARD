@@ -1,7 +1,7 @@
-# RUST-GUARD pre-commit configuration.
+# WORKSPACE-GUARD pre-commit configuration.
 #
 # Every shell-sourced check below uses ../CI/lib/checks.sh because
-# RUST-GUARD is a sibling of AMI-CI under projects/.
+# WORKSPACE-GUARD is a sibling of WORKSPACE-CI under projects/.
 
 repos:
   - repo: local

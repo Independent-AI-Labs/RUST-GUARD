@@ -200,7 +200,7 @@ fn glob_match_segments(segs: &[&str], pats: &[&str]) -> bool {
 }
 
 pub const GIT_ORIGINAL: &str = "/usr/bin/git.original\0";
-pub const LOG_FILE: &str = ".rust-guard.log";
+pub const LOG_FILE: &str = ".workspace-guard.log";
 
 fn main() {
     let result = run();

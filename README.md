@@ -1,11 +1,11 @@
-# RUST-GUARD — SUID Guard Framework (Git PoC)
+# WORKSPACE-GUARD — SUID Guard Framework (Git PoC)
 
 **Compiled root privilege enforcement for git.**  
 Replaces PATH-based bash wrappers with an **unbypassable SUID-root binary**.
 
 ## Why
 
-Traditional git guards (bash wrappers, pre-commit hooks) are readable, editable, and trivially bypassed — just run `git` directly or unset the wrapper. RUST-GUARD solves this by:
+Traditional git guards (bash wrappers, pre-commit hooks) are readable, editable, and trivially bypassed — just run `git` directly or unset the wrapper. WORKSPACE-GUARD solves this by:
 
 1. Installing a **compiled Rust binary** as `/usr/bin/git` with **SUID root (4555)**
 2. Relocating the real git to `/usr/bin/git.original` (mode **0700 root:root** — unreadable and unexecutable by anyone but root)
@@ -18,7 +18,7 @@ The user cannot bypass the guard because they cannot read, modify, or directly e
 
 ```mermaid
 flowchart TD
-    User["User: git push --force"] --> Guard["/usr/bin/git (SUID root 4555)<br/>rust-guard binary"]
+    User["User: git push --force"] --> Guard["/usr/bin/git (SUID root 4555)<br/>workspace-guard binary"]
 
     Guard --> AT_SECURE["AT_SECURE check"]
     Guard --> ArgParse["Arg parse + block"]
@@ -87,10 +87,10 @@ sudo make pre-req
 #   7. Restrict alternate git binaries (/snap/bin/git, /usr/local/bin/git)
 
 # Uninstall:
-sudo make pre-req --uninstall-rust-guard
+sudo make pre-req --uninstall-workspace-guard
 
 # Verify:
-sudo make pre-req --check-rust-guard
+sudo make pre-req --check-workspace-guard
 ```
 
 ## Development
@@ -117,7 +117,7 @@ make compliance
 ## Project Structure
 
 ```
-RUST-GUARD/
+WORKSPACE-GUARD/
 ├── Cargo.toml              # Single dependency: libc
 ├── Makefile                # Build, test, lint, compliance targets
 ├── .pre-commit-config.yaml # AMI-CI + Rust hooks
@@ -131,7 +131,7 @@ RUST-GUARD/
 │   ├── args.rs             # Argument parsing, null-byte check, -c flag validation
 │   ├── exec.rs             # AT_SECURE check, execve, AMI-CI contract check
 │   ├── block.rs            # Blocked subcommand logic
-│   └── log.rs              # Block audit logging to ~/.rust-guard.log
+│   └── log.rs              # Block audit logging to ~/.workspace-guard.log
 ├── tests/
 │   └── integration_test.rs # Non-SUID operation tests
 └── README.md
@@ -144,11 +144,11 @@ RUST-GUARD/
 3. **Immutable binaries**: Both `/usr/bin/git` and `/usr/bin/git.original` have `chattr +i` to prevent tampering
 4. **dpkg-divert protected**: `apt` cannot overwrite the guard — divert redirects to `git.distrib`
 5. **Scrubbed environment**: Only whitelisted env vars survive to `execve`; `PATH` is hardcoded; dangerous `-c` keys blocked
-6. **Audit trail**: Every block is logged to `~/.rust-guard.log` with timestamp, cwd, uid, and reason
+6. **Audit trail**: Every block is logged to `~/.workspace-guard.log` with timestamp, cwd, uid, and reason
 
 ## Framework vs PoC
 
-RUST-GUARD is designed as a **framework** for hardening SUID access to any tool. The initial PoC targets `git`, but the architecture supports extending to other binaries (ssh, rsync, make, etc.) by creating separate guard crates with their own allow/block lists.
+WORKSPACE-GUARD is designed as a **framework** for hardening SUID access to any tool. The initial PoC targets `git`, but the architecture supports extending to other binaries (ssh, rsync, make, etc.) by creating separate guard crates with their own allow/block lists.
 
 ## License
 

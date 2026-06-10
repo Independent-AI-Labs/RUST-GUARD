@@ -171,10 +171,10 @@ pub fn check_ami_ci_contract(subcommand: &str) -> Result<(), GuardError> {
         ));
     }
 
-    let ci_script = format!("{}/projects/AMI-CI/lib/checks_quality.sh", wsroot);
+    let ci_script = format!("{}/projec../CI/lib/checks_quality.sh", wsroot);
     if !Path::new(&ci_script).exists() {
         eprintln!(
-            "WARNING: AMI-CI contract check script not found at {}",
+            "WARNING: WORKSPACE-CI contract check script not found at {}",
             ci_script
         );
         return Ok(());
@@ -194,7 +194,7 @@ pub fn check_ami_ci_contract(subcommand: &str) -> Result<(), GuardError> {
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(GuardError::ContractFailed(format!(
-            "AMI-CI contract violation:\n{}",
+            "WORKSPACE-CI contract violation:\n{}",
             stderr
         )));
     }
@@ -289,7 +289,7 @@ fn find_workspace_root(toplevel: &str) -> Option<String> {
     let mut cur = std::path::PathBuf::from(toplevel);
     loop {
         let boot = cur.join(".boot-linux");
-        let ci = cur.join("projects/AMI-CI");
+        let ci = cur.join("projects/CI");
         let guard = cur.join("ami/scripts/utils/git-guard");
         if boot.is_dir() && ci.is_dir() && guard.is_file() {
             return Some(cur.to_string_lossy().to_string());
@@ -320,13 +320,13 @@ version: 1
 defaults:
   tier: strict
 exemptions:
-  - path: projects/RUST-GUARD/
+  - path: projects/WORKSPACE-GUARD/
     tier: strict
     reason: "test"
 "#;
         write_temp_enforcement(dir.path(), content);
         let wsroot = dir.path().to_string_lossy().to_string();
-        let toplevel = format!("{}/projects/RUST-GUARD", wsroot);
+        let toplevel = format!("{}/projects/WORKSPACE-GUARD", wsroot);
         assert!(!check_vendored_tier_bypass(&wsroot, &toplevel));
     }
 
@@ -338,13 +338,13 @@ version: 1
 defaults:
   tier: strict
 exemptions:
-  - path: projects/RUST-GUARD/
+  - path: projects/WORKSPACE-GUARD/
     tier: vendored
     reason: "test vendored bypass"
 "#;
         write_temp_enforcement(dir.path(), content);
         let wsroot = dir.path().to_string_lossy().to_string();
-        let toplevel = format!("{}/projects/RUST-GUARD", wsroot);
+        let toplevel = format!("{}/projects/WORKSPACE-GUARD", wsroot);
         assert!(check_vendored_tier_bypass(&wsroot, &toplevel));
     }
 
@@ -366,7 +366,7 @@ defaults:
     fn vendored_tier_missing_file() {
         let dir = tempfile::tempdir().unwrap();
         let wsroot = dir.path().to_string_lossy().to_string();
-        let toplevel = format!("{}/projects/RUST-GUARD", wsroot);
+        let toplevel = format!("{}/projects/WORKSPACE-GUARD", wsroot);
         assert!(!check_vendored_tier_bypass(&wsroot, &toplevel));
     }
 
@@ -378,13 +378,13 @@ version: 1
 defaults:
   tier: strict
 exemptions:
-  - path: projects/RUST-GUARD/
+  - path: projects/WORKSPACE-GUARD/
     tier: vendored
     reason: "test"
 "#;
         write_temp_enforcement(dir.path(), content);
         let wsroot = dir.path().to_string_lossy().to_string();
-        let toplevel = format!("{}/projects/RUST-GUARD/subdir", wsroot);
+        let toplevel = format!("{}/projects/WORKSPACE-GUARD/subdir", wsroot);
         assert!(check_vendored_tier_bypass(&wsroot, &toplevel));
     }
 

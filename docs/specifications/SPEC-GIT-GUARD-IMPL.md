@@ -12,7 +12,7 @@
 ### 8.1 Crate Structure
 
 ```
-rust-guard/
+workspace-guard/
 ├── Cargo.toml
 ├── Cargo.lock
 ├── .cargo/
@@ -57,7 +57,7 @@ Only two `unsafe` blocks are needed:
 
 ```toml
 [package]
-name = "rust-guard"
+name = "workspace-guard"
 version = "0.1.0"
 edition = "2021"
 
@@ -179,12 +179,12 @@ The worst-case RCE allows the attacker to run arbitrary commands as root — whi
 
 | Path | Purpose |
 |------|---------|
-| `/usr/bin/git` | rust-guard SUID binary (installed) |
+| `/usr/bin/git` | workspace-guard SUID binary (installed) |
 | `/usr/bin/git.original` | real git binary (relocated, 0700 root:root) |
-| `projects/RUST-GUARD/` | Rust source code repository |
-| `projects/RUST-GUARD/src/main.rs` | Multi-module Rust implementation |
-| `projects/RUST-GUARD/Cargo.toml` | Package manifest |
-| `projects/RUST-GUARD/Cargo.lock` | Locked dependencies |
+| `projects/WORKSPACE-GUARD/` | Rust source code repository |
+| `projects/WORKSPACE-GUARD/src/main.rs` | Multi-module Rust implementation |
+| `projects/WORKSPACE-GUARD/Cargo.toml` | Package manifest |
+| `projects/WORKSPACE-GUARD/Cargo.lock` | Locked dependencies |
 
 ---
 

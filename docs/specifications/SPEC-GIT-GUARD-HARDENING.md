@@ -185,12 +185,12 @@ The installation creates a system-wide audit trail:
 
 ```bash
 # Create audit log directory (owned by root, writable by all users)
-mkdir -p /var/log/rust-guard
-chmod 1777 /var/log/rust-guard
+mkdir -p /var/log/workspace-guard
+chmod 1777 /var/log/workspace-guard
 
 # Configure rsyslog to forward guard logs
-cat > /etc/rsyslog.d/99-rust-guard.conf << 'EOF'
-if $programname == 'rust-guard' then /var/log/rust-guard/audit.log
+cat > /etc/rsyslog.d/99-workspace-guard.conf << 'EOF'
+if $programname == 'workspace-guard' then /var/log/workspace-guard/audit.log
 & stop
 EOF
 

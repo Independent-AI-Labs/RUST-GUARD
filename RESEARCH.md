@@ -8,7 +8,7 @@
 
 ## 1. Introduction
 
-RUST-GUARD is a SUID-root compiled binary that intercepts, validates, and sanitizes execution of a target program (PoC: `git`). This document surveys the attack surface of SUID binaries on Linux, evaluates historical and recent CVEs, and maps mitigations to RUST-GUARD's design.
+WORKSPACE-GUARD is a SUID-root compiled binary that intercepts, validates, and sanitizes execution of a target program (PoC: `git`). This document surveys the attack surface of SUID binaries on Linux, evaluates historical and recent CVEs, and maps mitigations to WORKSPACE-GUARD's design.
 
 ---
 
@@ -22,13 +22,13 @@ The kernel sets `AT_SECURE` in the auxiliary vector when executing a SUID binary
 - **Bypass via custom ld.so**: If an attacker can control `LD_LIBRARY_PATH` before `execve`, or use a static binary, `AT_SECURE` may not be set.
 - **Unsanitized SUID binaries**: Some SUID programs re-read environment variables after startup. If the program doesn't use glibc's secure-execution helpers, `AT_SECURE` may be bypassed entirely.
 
-**RUST-GUARD Mitigation**: The guard scrubs the environment itself before `execve` — only whitelisted variables survive. `PATH` is hardcoded. `GCONV_PATH`, `LD_*`, and all non-whitelisted variables are stripped regardless of `AT_SECURE`.
+**WORKSPACE-GUARD Mitigation**: The guard scrubs the environment itself before `execve` — only whitelisted variables survive. `PATH` is hardcoded. `GCONV_PATH`, `LD_*`, and all non-whitelisted variables are stripped regardless of `AT_SECURE`.
 
 ### 2.2 PATH / Binary Injection
 
 A SUID binary that calls `execvp("git", ...)` or `system("git ...")` without an absolute path will follow the user-controlled `PATH`.
 
-**RUST-GUARD Mitigation**: Guard calls `/usr/bin/git.original` via absolute path. The guard itself is SUID but only calls `git.original` through `execve` with a hardcoded path. No subprocess resolution ambiguity.
+**WORKSPACE-GUARD Mitigation**: Guard calls `/usr/bin/git.original` via absolute path. The guard itself is SUID but only calls `git.original` through `execve` with a hardcoded path. No subprocess resolution ambiguity.
 
 ### 2.3 Shared Library Hijacking
 
@@ -36,7 +36,7 @@ A SUID binary that calls `execvp("git", ...)` or `system("git ...")` without an 
 - **`/etc/ld.so.conf` / `ldconfig`**: If an attacker can write to a directory in ldconfig's cache, they can inject `.so` files that SUID binaries load. This requires root or write access to system config directories.
 - **Missing `RUNPATH` libraries**: A SUID binary that `dlopen()`s a library from a user-writable path can be exploited.
 
-**RUST-GUARD Mitigation**: Statically linked via musl (preferred) or linked with gcc + `RUNPATH` controlled at build time. No `dlopen()`. No dynamic library loading at runtime. Only `libc` dependency — and for musl builds, even that is linked statically.
+**WORKSPACE-GUARD Mitigation**: Statically linked via musl (preferred) or linked with gcc + `RUNPATH` controlled at build time. No `dlopen()`. No dynamic library loading at runtime. Only `libc` dependency — and for musl builds, even that is linked statically.
 
 ### 2.4 `GCONV_PATH` Injection
 
@@ -45,7 +45,7 @@ The glibc `iconv` framework loads gconv modules from `GCONV_PATH`. Normally stri
 - **CVE-2021-4034** re-introduced it by corrupting `pkexec`'s environment.
 - Custom charset conversion triggers `.so` loading from attacker-controlled directory.
 
-**RUST-GUARD Mitigation**: 
+**WORKSPACE-GUARD Mitigation**: 
 - Guard uses musl (preferred), which lacks `GCONV_PATH` entirely.
 - Guard's own env stripping removes any `GCONV_PATH` before `execve`.
 - Even if gconv were triggered inside the real git binary, `GCONV_PATH` is not in the whitelist.
@@ -56,7 +56,7 @@ A SUID binary running as root is still debuggable by the user who launched it if
 - `ptrace` the SUID binary before it drops privileges
 - Write to `/proc/<pid>/mem` to modify its memory
 
-**RUST-GUARD Mitigation**: 
+**WORKSPACE-GUARD Mitigation**: 
 - Guard drops privileges via `setuid(getuid())` before `execve` — after that point, the real binary runs as the user and is not useful to attack.
 - Guard sets `RLIMIT_CORE = 0` to prevent core dumps (memory leak).
 - Guard's execution window is narrow: AT_SECURE check → parse → block/execve. No interactive phase.
@@ -67,7 +67,7 @@ A SUID binary running as root is still debuggable by the user who launched it if
 - **`--no-verify` bypass**: Pre-commit hooks can be skipped.
 - **Dangerous `-c` config keys**: `core.hookspath`, `core.sshcommand`, `credential.helper`, `http.proxy`, etc.
 
-**RUST-GUARD Mitigation**: 
+**WORKSPACE-GUARD Mitigation**: 
 - Null bytes in any argument cause hard rejection.
 - `--no-verify` is blocked unconditionally.
 - 12 dangerous config keys are blocked. Both `-c key=val` and `--c=key=val` forms are checked.
@@ -109,12 +109,12 @@ The file on disk is **never modified**. Traditional integrity checks (`sha256sum
 - **Module blacklist**: `blacklist algif_aead` in `/etc/modprobe.d/`
 - **Container fix**: Patch the *host* kernel; rebuilding container images does not help
 
-### 3.4 Impact on RUST-GUARD
+### 3.4 Impact on WORKSPACE-GUARD
 
 - The guard binary itself is a SUID target — Copy Fail can corrupt `/usr/bin/git` in memory.
 - However, guard's non-SUID exit (`AT_SECURE` check) provides partial defense: the corrupted guard runs → SUID not set → `NotSuid` → exit.
 - Real concern: attacker corrupts `/usr/bin/git.original`? No — mode 0700 is not world-readable, so a read-only FD cannot be opened.
-- **Net effect**: RUST-GUARD is partially resilient to Copy Fail because:
+- **Net effect**: WORKSPACE-GUARD is partially resilient to Copy Fail because:
   - `git.original` is unreadable by non-root (no FD to pass to `splice()`)
   - The guard itself, if corrupted, simply refuses to run (no SUID, no bypass)
   - Deeper concern: attacker corrupts a **different** SUID binary (`/usr/bin/su`, `/usr/bin/sudo`) to get root, then replaces the guard and git.original from root
@@ -149,7 +149,7 @@ Published at lowlevel.re (January 2026). Demonstrates that **Full RELRO does not
 4. Trigger symbol resolution via a legitimate function call path
 5. `_dl_fixup()` computes `sym->st_value + l_addr` and transfers control to attacker
 
-### 4.4 Impact on RUST-GUARD
+### 4.4 Impact on WORKSPACE-GUARD
 
 - Guard is a Rust binary with no dynamic symbol resolution after startup. No `dlopen()`, no lazy binding.
 - musl-static builds eliminate `ld.so` entirely — **immune to ret2dso**.
@@ -205,13 +205,13 @@ gVisor's Sentry process reimplements the Linux kernel API in userspace (Go). Ben
 - Not all syscalls supported (some require platform-specific patches)
 - Does not protect against vulnerabilities in gVisor's own Sentry implementation (but this surface is much smaller than the full host kernel)
 
-### 5.5 RUST-GUARD in Agentic Environments
+### 5.5 WORKSPACE-GUARD in Agentic Environments
 
-RUST-GUARD's function in an agentic context:
+WORKSPACE-GUARD's function in an agentic context:
 - Prevents agents from rewriting git history or destroying work via `git reset --hard`, `git push --force`, etc.
 - Blocks `--no-verify` to ensure hooks fire.
 - Scrub environment of hook-bypass variables (`SKIP`, `PRE_COMMIT_ALLOW_NO_CONFIG`).
-- Audits all blocked operations to `.rust-guard.log`.
+- Audits all blocked operations to `.workspace-guard.log`.
 - Operates at the binary level, so it works regardless of whether the agent runs in Docker, gVisor, or directly on the host.
 
 ---
@@ -231,8 +231,8 @@ RUST-GUARD's function in an agentic context:
 | Runtime | `RLIMIT_NOFILE = 256` (no fd exhaustion) | Done |
 | Runtime | Hardcoded PATH | Done |
 | Runtime | `git.original` mode verification before each execve | Done |
-| Audit | Block logging to `~/.rust-guard.log` | Done |
-| Audit | `/var/log/rust-guard/` system-wide directory | Deploy |
+| Audit | Block logging to `~/.workspace-guard.log` | Done |
+| Audit | `/var/log/workspace-guard/` system-wide directory | Deploy |
 | Sandbox | gVisor/Firecracker for agent workloads | Manual |
 | Monitoring | Falco rule for AF_ALG SEQPACKET sockets | Manual |
 | Monitoring | Auditd for `splice()` + SUID exec correlation | Manual |

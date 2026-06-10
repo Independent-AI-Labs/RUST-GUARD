@@ -13,5 +13,5 @@
 # Empty exceptions list (exceptions: []) is allowed -- fully compliant.
 
 version: 1
-project: RUST-GUARD
+project: WORKSPACE-GUARD
 exceptions: []

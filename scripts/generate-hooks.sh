@@ -4,19 +4,19 @@
 # WITHOUT gitleaks, banned-words, sensitive-files, suppress-swallow scanning,
 # commit-message validation, or quality-exception enforcement.
 #
-# USE THE AMI-CI GENERATOR INSTEAD:
+# USE THE WORKSPACE-CI GENERATOR INSTEAD:
 #   make install-hooks
 #
-# Running this script directly will OVERWRITE the full AMI-CI-generated
+# Running this script directly will OVERWRITE the full WORKSPACE-CI-generated
 # hooks with a weaker subset. This downgrade attack vector is intentional:
 # if you need these weaker hooks, you know how to bypass the warning.
 # For production use, always run 'make install-hooks' which delegates
-# to the full AMI-CI hook generator.
+# to the full WORKSPACE-CI hook generator.
 
 set -euo pipefail
 
 echo "WARNING: generate-hooks.sh is DEPRECATED and produces WEAKER hooks." >&2
-echo "Use 'make install-hooks' for full AMI-CI hook coverage." >&2
+echo "Use 'make install-hooks' for full WORKSPACE-CI hook coverage." >&2
 echo "" >&2
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -70,8 +70,8 @@ EOF
     _header
     cat << 'EOF'
 # Only run Rust checks when Rust files are staged
-STAGED="$(git diff --cached --name-only --diff-filter=ACMR || true)"
-MATCH="$(echo "$STAGED" | grep -E '\.rs$|Cargo\.toml$|Cargo\.lock$' || true)"
+STAGED="$(git diff --cached --name-only --diff-filter=ACMR 2>&1)" || STAGED=""
+MATCH="$(echo "$STAGED" | grep -E '\.rs$|Cargo\.toml$|Cargo\.lock$' 2>&1)" || MATCH=""
 
 if [[ -z "$MATCH" ]]; then
     echo "cargo hooks: no Rust files staged — skipping"

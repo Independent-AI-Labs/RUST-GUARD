@@ -1,4 +1,4 @@
-# Specification: RUST-GUARD — SUID Guard Framework (Git PoC)
+# Specification: WORKSPACE-GUARD — SUID Guard Framework (Git PoC)
 
 **Date:** 2026-05-18
 **Status:** DRAFT
@@ -15,7 +15,7 @@ User invokes: git <subcommand> [args...]
                     │
                     ▼
         /usr/bin/git (SUID root, 4555)
-        rust-guard Rust binary
+        workspace-guard Rust binary
                     │
         ┌───────────┼────────────────┐
         │           │                │
@@ -430,7 +430,7 @@ The guard determines if the current repo is inside an AMI workspace by:
 1. Getting the repo's top-level directory (via `rev-parse --show-toplevel` subprocess, or scanning for `.git`).
 2. Walking up from that directory to `/`, checking each ancestor for:
    - `.boot-linux/` directory exists
-   - `projects/AMI-CI/` directory exists
+   - `projec../CI/` directory exists
    - `ami/scripts/utils/git-guard` file exists
 
 The first ancestor with all three is the workspace root. If none found, skip contract enforcement.
@@ -440,7 +440,7 @@ The first ancestor with all three is the workspace root. If none found, skip con
 When the repo is in an AMI workspace and the subcommand is `commit` or `push`, the guard runs:
 
 ```bash
-bash /path/to/projects/AMI-CI/lib/checks_quality.sh
+bash /path/to/projec../CI/lib/checks_quality.sh
 ```
 
 With environment variables:
@@ -488,7 +488,7 @@ Example:
 
 ### 7.2 Log Location
 
-`${HOME}/.rust-guard.log` — the HOME is the **real user's** home directory (from `getpwuid(getuid())`), not root's home. Since the guard runs as SUID root but the real UID is the invoking user, we must use the real UID to find the correct HOME.
+`${HOME}/.workspace-guard.log` — the HOME is the **real user's** home directory (from `getpwuid(getuid())`), not root's home. Since the guard runs as SUID root but the real UID is the invoking user, we must use the real UID to find the correct HOME.
 
 ### 7.3 Secret-Safe Logging
 

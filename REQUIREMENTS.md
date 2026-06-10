@@ -1,4 +1,4 @@
-# Requirements: RUST-GUARD SUID Guard Framework
+# Requirements: WORKSPACE-GUARD SUID Guard Framework
 
 **Date:** 2026-05-19  
 **Status:** DRAFT  
@@ -8,7 +8,7 @@
 
 ## Background
 
-The RUST-GUARD framework provides compiled, unbypassable privilege enforcement for tools that need to be intercepted at the binary level. The initial Proof of Concept targets `git`, replacing a 337-line bash wrapper (`ami/scripts/utils/git-guard`) that was trivially bypassable (PATH-based, readable source, editable).
+The WORKSPACE-GUARD framework provides compiled, unbypassable privilege enforcement for tools that need to be intercepted at the binary level. The initial Proof of Concept targets `git`, replacing a 337-line bash wrapper (`ami/scripts/utils/git-guard`) that was trivially bypassable (PATH-based, readable source, editable).
 
 The core insight: if the *real* binary is mode 0700 root:root and the *guard* binary is SUID root 4555 at the same path, non-root users **must** go through the guard and cannot read or modify its logic.
 
@@ -68,18 +68,18 @@ The core insight: if the *real* binary is mode 0700 root:root and the *guard* bi
 
 ### 5. Audit Logging
 
-- **REQ-GGUARD-080**: Every blocked operation shall be logged to `~/.rust-guard.log`.
+- **REQ-GGUARD-080**: Every blocked operation shall be logged to `~/.workspace-guard.log`.
 - **REQ-GGUARD-081**: The log entry shall include: ISO-8601 timestamp, current working directory, the blocked command/reason, and the user's UID.
 - **REQ-GGUARD-082**: The guard shall print a user-visible error message with a hint on how to proceed.
 - **REQ-GGUARD-083**: The guard shall attempt to write to `/dev/tty` for immediate user notification.
-- **REQ-GGUARD-084**: The system-level audit log directory `/var/log/rust-guard/` shall exist with mode 1777.
+- **REQ-GGUARD-084**: The system-level audit log directory `/var/log/workspace-guard/` shall exist with mode 1777.
 
 ### 6. AMI-CI Integration
 
 - **REQ-GGUARD-100**: Before `git commit` and `git push`, the guard shall execute the AMI-CI quality check script (`checks_quality.sh`).
 - **REQ-GGUARD-101**: If the quality check fails, the guard shall reject the operation with a `ContractFailed` error (exit code 4).
 - **REQ-GGUARD-102**: The guard shall pass the `AMI_GGUARD_CMD`, `AMI_GGUARD_REPO_ROOT`, and `AMI_GGUARD_WORKSPACE_ROOT` environment variables to the quality check script.
-- **REQ-GGUARD-103**: The guard shall detect the workspace root by walking up from the git toplevel looking for `.boot-linux` + `projects/AMI-CI` + `ami/scripts/utils/git-guard`.
+- **REQ-GGUARD-103**: The guard shall detect the workspace root by walking up from the git toplevel looking for `.boot-linux` + `projects/CI` + `ami/scripts/utils/git-guard`.
 
 ### 7. Deployment & Installation
 
@@ -87,10 +87,10 @@ The core insight: if the *real* binary is mode 0700 root:root and the *guard* bi
 - **REQ-GGUARD-121**: The build process shall produce a statically linked musl binary (preferred) or a dynamically linked gnu binary with `opt-level = "z"`, `lto = true`, `codegen-units = 1`, `panic = "abort"`, and `strip = true`.
 - **REQ-GGUARD-122**: The sole Rust dependency shall be `libc` (system FFI).
 - **REQ-GGUARD-123**: Installation shall configure `dpkg-divert` to redirect apt's git package from `/usr/bin/git` to `/usr/bin/git.distrib`.
-- **REQ-GGUARD-124**: Installation shall register an apt post-invoke hook at `/etc/apt/apt.conf.d/99rust-guard` that warns if the git package changes without the guard.
+- **REQ-GGUARD-124**: Installation shall register an apt post-invoke hook at `/etc/apt/apt.conf.d/99workspace-guard` that warns if the git package changes without the guard.
 - **REQ-GGUARD-125**: Installation shall restrict alternate git binaries (`/snap/bin/git`, `/usr/local/bin/git`) to prevent guard bypass.
 - **REQ-GGUARD-126**: Installation shall verify the guard works by running `git --version` and testing that `git reset --hard` is blocked.
-- **REQ-GGUARD-127**: Installation shall support `--uninstall-rust-guard` and `--reinstall-rust-guard` flags.
+- **REQ-GGUARD-127**: Installation shall support `--uninstall-workspace-guard` and `--reinstall-workspace-guard` flags.
 - **REQ-GGUARD-128**: Uninstall shall restore the original git binary, remove `dpkg-divert`, and clean up all guard system paths.
 
 ### 8. Binary Hardening
